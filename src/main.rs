@@ -89,8 +89,7 @@ impl Reloadable {
             unsafe { Container::load("D:\\Rust\\ratingers-notifier\\target\\release\\rust_dl.dll") }
             .expect("Could not open library or load symbols");
         let cv = c.version();
-        c.start(handle_message);
-        Reloadable {dll: c, ver: cv, ticks: 0}
+        Reloadable {dll: c, ver: u64::MAX, ticks: 0}
     }
     fn reload(&mut self) {
         if self.ticks > 0 {self.ticks -= 1; return;}
@@ -156,6 +155,7 @@ extern "C" fn handle_message(msg: Message) {
     let msg_text: &mut String = unsafe {&mut *msg.text};
     
     // SAFETY: protected by RwLock
+    // can deadlock if notifier attempts to create comment during app initialization
     let mut comments_lock = app.comments.write().unwrap();
     comments_lock.push(msg_text.clone());
     
